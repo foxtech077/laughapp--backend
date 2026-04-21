@@ -7,7 +7,7 @@ Production-ready NestJS backend for the Laugh App MVP.
 - **Framework**: NestJS (TypeScript)
 - **ORM**: Prisma
 - **Database**: PostgreSQL
-- **Auth**: JWT + Passport
+- **Auth**: Header-based request identity (`x-user-id`, `x-user-type`)
 - **API Docs**: Swagger
 
 ## Getting Started
@@ -42,9 +42,7 @@ Copy `.env.example` to `.env` and configure:
 cp .env.example .env
 ```
 
-Edit `.env` with your database credentials and secrets.
-
-Before any production deploy, rotate `JWT_SECRET` and `JWT_REFRESH_SECRET` to strong unique values.
+Edit `.env` with your database credentials and app settings.
 
 ### Running
 
@@ -63,7 +61,7 @@ Once running, visit: http://localhost:3000/docs
 
 Swagger is disabled automatically when `NODE_ENV=production`.
 
-## Test Accounts (after seeding)
+## Seed Accounts (after seeding)
 
 - **Admin**: admin@laughapp.com / admin123
 - **Creator**: creator@laughapp.com / creator123
@@ -75,7 +73,6 @@ Swagger is disabled automatically when `NODE_ENV=production`.
 src/
 ├── modules/
 │   ├── users/           # User management
-│   ├── auth/            # Authentication
 │   ├── videos/          # Video content
 │   ├── tips/             # Tipping system
 │   ├── follows/          # Follow relationships

@@ -3,11 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { PrismaModule } from './common/database/prisma.module';
-import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
-import { RolesGuard } from './common/guards/roles.guard';
 import { HealthController } from './health.controller';
 import { UsersModule } from './modules/users/users.module';
-import { AuthModule } from './modules/auth/auth.module';
 import { VideosModule } from './modules/videos/videos.module';
 import { TipsModule } from './modules/tips/tips.module';
 import { FollowsModule } from './modules/follows/follows.module';
@@ -41,7 +38,6 @@ import { SessionsModule } from './modules/sessions/sessions.module';
 
     // Feature Modules
     UsersModule,
-    AuthModule,
     VideosModule,
     TipsModule,
     FollowsModule,
@@ -60,8 +56,6 @@ import { SessionsModule } from './modules/sessions/sessions.module';
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
-    { provide: APP_GUARD, useClass: JwtAuthGuard },
-    { provide: APP_GUARD, useClass: RolesGuard },
   ],
 })
 export class AppModule {}
