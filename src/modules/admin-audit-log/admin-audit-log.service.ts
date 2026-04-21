@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../common/database/prisma.service';
+import { PrismaService } from '../../common/database/prisma.service';
 
 @Injectable()
 export class AdminAuditLogService {
@@ -15,7 +15,7 @@ export class AdminAuditLogService {
     ipAddress?: string;
     userAgent?: string;
   }) {
-    return this.prisma.adminAuditLog.create({ data });
+    return this.prisma.adminAuditLog.create({ data: data as any });
   }
 
   async findAll(page = 1, limit = 50) {

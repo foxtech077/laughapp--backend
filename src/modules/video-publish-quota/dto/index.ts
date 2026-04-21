@@ -1,1 +1,1 @@
-// DTOs for video-publish-quota
+export * from './video-publish-quota.dto';

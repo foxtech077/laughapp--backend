@@ -1,11 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsInt, Min, IsOptional, IsEnum, IsUUID } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsOptional, IsInt, IsEnum } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { CoinTxnReason } from '@prisma/client';
 
 export class CreateCoinTransactionDto {
   @ApiProperty()
-  @IsUUID()
+  @IsString()
   userId: string;
 
   @ApiProperty()
@@ -23,7 +23,7 @@ export class CreateCoinTransactionDto {
 
 export class FindCoinTransactionsDto {
   @ApiPropertyOptional()
-  @IsUUID()
+  @IsString()
   @IsOptional()
   userId?: string;
 

@@ -18,3 +18,63 @@ export class GetLeaderboardDto {
   @Transform(({ value }) => parseInt(value, 10))
   limit?: number = 50;
 }
+
+export class LeaderboardEntryDto {
+  @ApiProperty()
+  rank: number;
+
+  @ApiProperty()
+  score: number;
+
+  @ApiProperty()
+  videoId: string;
+
+  @ApiProperty()
+  title: string;
+
+  @ApiProperty()
+  thumbnailUrl: string | null;
+
+  @ApiProperty()
+  creator: {
+    id: string;
+    username: string | null;
+    displayName: string | null;
+    avatarUrl: string | null;
+  };
+
+  @ApiProperty()
+  viewCount: bigint;
+
+  @ApiProperty()
+  signupCount: bigint;
+
+  @ApiProperty()
+  tipCount: bigint;
+
+  @ApiProperty()
+  tipAmount: bigint;
+}
+
+export class LeaderboardResponseDto {
+  @ApiProperty()
+  hourKey: string | null;
+
+  @ApiProperty()
+  generatedAt: Date | null;
+
+  @ApiProperty({ type: [LeaderboardEntryDto] })
+  entries: LeaderboardEntryDto[];
+
+  @ApiProperty()
+  total: number;
+
+  @ApiProperty()
+  page: number;
+
+  @ApiProperty()
+  limit: number;
+
+  @ApiProperty()
+  totalPages: number;
+}

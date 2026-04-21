@@ -1,7 +1,7 @@
 import { Controller, Get, Query, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AdminAuditLogService } from './admin-audit-log.service';
-import { Roles } from '../../../common/decorators/roles.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { UserType } from '@prisma/client';
 import { Transform } from 'class-transformer';
 

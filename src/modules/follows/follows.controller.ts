@@ -2,8 +2,8 @@ import { Controller, Get, Post, Delete, Body, Param, Query, ParseUUIDPipe, HttpC
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { FollowsService } from './follows.service';
 import { FollowDto, FindFollowsDto } from './dto/follow.dto';
-import { CurrentUser } from '../../../common/decorators/current-user.decorator';
-import { Public } from '../../../common/decorators/public.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('follows')
 @Controller('follows')

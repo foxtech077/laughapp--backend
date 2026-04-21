@@ -1,1 +1,1 @@
-// DTOs for admin-audit-log
+export * from './audit-log.dto';

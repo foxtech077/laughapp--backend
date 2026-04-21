@@ -2,7 +2,7 @@ import { Controller, Get, Patch, Delete, Body, Param, Query, ParseUUIDPipe } fro
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
 import { CreateNotificationDto, FindNotificationsDto, MarkReadDto } from './dto/notification.dto';
-import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @ApiTags('notifications')
 @Controller('notifications')

@@ -1,7 +1,7 @@
 import { Controller, Get, Delete, Param, ParseUUIDPipe, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { SessionsService } from './sessions.service';
-import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @ApiTags('sessions')
 @Controller('sessions')

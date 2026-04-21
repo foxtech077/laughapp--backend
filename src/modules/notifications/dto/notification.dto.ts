@@ -1,10 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsBoolean, IsInt, IsUUID } from 'class-validator';
+import { IsString, IsOptional, IsBoolean } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class CreateNotificationDto {
-  @ApiProperty()
-  @IsUUID()
+  @ApiProperty({ example: 'uuid-of-user' })
+  @IsString()
   userId: string;
 
   @ApiProperty({ example: 'TIP_RECEIVED' })

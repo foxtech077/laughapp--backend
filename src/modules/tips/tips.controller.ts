@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Param, Query, ParseUUIDPipe } from '@nestj
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { TipsService } from './tips.service';
 import { CreateTipDto, FindTipsDto, TipResponseDto, PaginatedTipsResponseDto } from './dto/tip.dto';
-import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @ApiTags('tips')
 @Controller('tips')

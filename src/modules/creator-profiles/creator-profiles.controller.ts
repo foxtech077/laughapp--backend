@@ -1,8 +1,8 @@
 import { Controller, Get, Patch, Param, ParseUUIDPipe, Body } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { CreatorProfilesService } from './creator-profiles.service';
-import { CurrentUser } from '../../../common/decorators/current-user.decorator';
-import { Public } from '../../../common/decorators/public.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('creators')
 @Controller('creators')

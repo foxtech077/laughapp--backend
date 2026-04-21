@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '../../../common/database/prisma.service';
+import { PrismaService } from '../../common/database/prisma.service';
 import { CreateTipDto, FindTipsDto } from './dto/tip.dto';
 import { UsersService } from '../users/users.service';
 import { VideosService } from '../videos/videos.service';

@@ -1,1 +1,1 @@
-// DTOs for daily-feed-entries
+export * from './daily-feed-entry.dto';

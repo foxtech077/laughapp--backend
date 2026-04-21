@@ -1,1 +1,1 @@
-// DTOs for sessions
+export * from './session.dto';

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../common/database/prisma.service';
+import { PrismaService } from '../../common/database/prisma.service';
 import { AttributionType } from '@prisma/client';
 
 @Injectable()
@@ -37,9 +37,6 @@ export class AttributionsService {
         include: {
           video: {
             select: { id: true, title: true, thumbnailUrl: true },
-          },
-          creator: {
-            select: { id: true, username: true, displayName: true, avatarUrl: true },
           },
         },
       }),

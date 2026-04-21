@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../../common/database/prisma.service';
+import { PrismaService } from '../../common/database/prisma.service';
 import { GenerateFeedDto, FindFeedsDto } from './dto/daily-feed.dto';
 import { FeedStatus, VideoStatus } from '@prisma/client';
 

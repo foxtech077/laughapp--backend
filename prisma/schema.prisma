@@ -74,7 +74,7 @@ model User {
   trialStartedAt           DateTime? @map("trial_started_at")
   trialEndsAt              DateTime? @map("trial_ends_at")
   isOnTrial                Boolean   @default(false) @map("is_on_trial")
-  supporterWindowStart    DateTime? @map("supporter_window_start")
+  supporterWindowStart     DateTime? @map("supporter_window_start")
   totalSupportingAmount    Int       @default(0) @map("total_supporting_amount")
   lastActiveAt             DateTime? @map("last_active_at")
   lastTipSentAt            DateTime? @map("last_tip_sent_at")
@@ -88,27 +88,16 @@ model User {
   videosCreated            Video[]           @relation("CreatorVideos")
   creatorProfile           CreatorProfile?
   attributions             Attribution[]     @relation("AttributedUser")
-  attributedBy             Attribution?      @relation("ReferrerUser")
   tipsGiven                Tip[]             @relation("FanTips")
   tipsReceived             Tip[]             @relation("CreatorTips")
   coinTransactions         CoinTransaction[]
-  purchases                Purchase[]
   notifications            Notification[]
   sessions                 Session[]
   adminAuditLogs           AdminAuditLog[]   @relation("AdminActions")
   videoPublishQuota        VideoPublishQuota?
-
-  // Follows
   following                Follow[]          @relation("Following")
   followers                Follow[]          @relation("Follower")
-  followerSourceVideos     Follow[]          @relation("FollowSourceVideo")
-  followerSourceCreators   Follow[]          @relation("FollowSourceCreator")
-
-  // Attributions as creator
-  attributionAsCreator     Attribution[]     @relation("AttributionAsCreator")
-
-  // Purchases
-  purchasesMade            Purchase[]        @relation("PurchaseUser")
+  purchases                Purchase[]        @relation("PurchaseUser")
 
   @@map("users")
   @@index([userType])
@@ -172,7 +161,6 @@ model Attribution {
   // Relations
   user              User            @relation("AttributedUser", fields: [userId], references: [id], onDelete: Cascade)
   video             Video?          @relation(fields: [videoId], references: [id], onDelete: SetNull)
-  creator           User?           @relation("AttributionAsCreator", fields: [creatorId], references: [id], onDelete: SetNull)
 
   @@map("attributions")
   @@index([userId])
@@ -221,7 +209,6 @@ model Video {
   feedEntries       DailyFeedEntry[]
   leaderboardEntries LeaderboardEntry[]
   followsAsSource   Follow[]            @relation("FollowSourceVideo")
-  followsAsCreator  Follow[]            @relation("FollowSourceCreator")
 
   @@map("videos")
   @@index([creatorId])
@@ -258,8 +245,6 @@ model VideoPublishQuota {
 
   @@map("video_publish_quota")
   @@index([creatorId])
-  @@index([dailyResetAt])
-  @@index([weeklyResetAt])
 }
 
 // ============================================================
@@ -283,8 +268,6 @@ model Tip {
   fan                 User              @relation("FanTips", fields: [fanId], references: [id], onDelete: Cascade)
   creator             User              @relation("CreatorTips", fields: [creatorId], references: [id], onDelete: Cascade)
   video               Video             @relation(fields: [videoId], references: [id], onDelete: Cascade)
-  coinTransactionFan  CoinTransaction?  @relation("TipCoinTxnFan")
-  coinTransactionCreator CoinTransaction? @relation("TipCoinTxnCreator")
 
   @@map("tips")
   @@index([fanId])
@@ -314,9 +297,6 @@ model CoinTransaction {
 
   // Relations
   user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tipAsFan      Tip?            @relation("TipCoinTxnFan", fields: [tipId], references: [id], onDelete: SetNull)
-  tipAsCreator  Tip?            @relation("TipCoinTxnCreator", fields: [tipId], references: [id], onDelete: SetNull)
-  purchase      Purchase?       @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
 
   @@map("coin_transactions")
   @@index([userId])
@@ -371,7 +351,6 @@ model Purchase {
   // Relations
   user                    User              @relation("PurchaseUser", fields: [userId], references: [id], onDelete: Cascade)
   package                 CoinPackage       @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  coinTransactions        CoinTransaction[]
 
   @@map("purchases")
   @@index([userId])
@@ -396,7 +375,6 @@ model Follow {
   follower          User        @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
   following         User        @relation("Follower", fields: [followingId], references: [id], onDelete: Cascade)
   sourceVideo       Video?      @relation("FollowSourceVideo", fields: [sourceVideoId], references: [id], onDelete: SetNull)
-  sourceCreator     User?       @relation("FollowSourceCreator", fields: [sourceCreatorId], references: [id], onDelete: SetNull)
 
   @@unique([followerId, followingId])
   @@map("follows")
@@ -411,14 +389,14 @@ model Follow {
 
 model DailyFeed {
   id                    String      @id @default(uuid())
-  feedDate              Date        @unique @map("feed_date")
+  feedDate              DateTime    @unique @map("feed_date")
   status                FeedStatus  @default(DRAFT)
   generatedAt           DateTime?   @map("generated_at")
   publishedAt           DateTime?   @map("published_at")
   totalVideos           Int         @default(0) @map("total_videos")
   generationDurationMs  Int?        @map("generation_duration_ms")
   isOverride            Boolean     @default(false) @map("is_override")
-  overrideReason       String?     @map("override_reason")
+  overrideReason        String?     @map("override_reason")
   createdAt             DateTime    @default(now()) @map("created_at")
   updatedAt             DateTime    @updatedAt @map("updated_at")
 
@@ -426,7 +404,6 @@ model DailyFeed {
   entries               DailyFeedEntry[]
 
   @@map("daily_feeds")
-  @@index([feedDate])
   @@index([status])
 }
 

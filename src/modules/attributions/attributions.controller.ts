@@ -1,7 +1,7 @@
 import { Controller, Get, Param, Query, ParseUUIDPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AttributionsService } from './attributions.service';
-import { Public } from '../../../common/decorators/public.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('attributions')
 @Controller('attributions')

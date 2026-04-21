@@ -1,1 +1,1 @@
-export * from './dto';
+export * from './creator-profiles.dto';

@@ -20,9 +20,9 @@ import {
 } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto, UpdateUserDto, FindUsersDto, UserResponseDto, PaginatedUsersResponseDto } from './dto/user.dto';
-import { Public } from '../../../common/decorators/public.decorator';
-import { Roles } from '../../../common/decorators/roles.decorator';
-import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { Public } from '../../common/decorators/public.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserType } from '@prisma/client';
 
 @ApiTags('users')

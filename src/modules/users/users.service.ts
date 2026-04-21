@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { PrismaService } from '../../../common/database/prisma.service';
+import { PrismaService } from '../../common/database/prisma.service';
 import { CreateUserDto, UpdateUserDto, FindUsersDto } from './dto/user.dto';
 import { UserType } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
@@ -87,7 +87,7 @@ export class UsersService {
     const skip = (page - 1) * limit;
 
     const where: Record<string, unknown> = {
-      deletedAt: null,
+      deletedAt: undefined,
     };
 
     if (userType) {
@@ -140,8 +140,8 @@ export class UsersService {
   }
 
   async findOne(id: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id, deletedAt: null },
+    const user = await this.prisma.user.findFirst({
+      where: { id, deletedAt: undefined },
       include: {
         creatorProfile: true,
       },
@@ -157,8 +157,8 @@ export class UsersService {
   }
 
   async findByEmail(email: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { email, deletedAt: null },
+    const user = await this.prisma.user.findFirst({
+      where: { email, deletedAt: undefined },
     });
 
     if (!user) {

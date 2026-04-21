@@ -1,1 +1,1 @@
-// DTOs for rate-limits
+export * from './rate-limits.dto';

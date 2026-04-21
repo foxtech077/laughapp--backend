@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../../../common/database/prisma.service';
+import { PrismaService } from '../../common/database/prisma.service';
 import { CreateVideoDto, UpdateVideoDto, FindVideosDto } from './dto/video.dto';
 import { VideoStatus } from '@prisma/client';
 

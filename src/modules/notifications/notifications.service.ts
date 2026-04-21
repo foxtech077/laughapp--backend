@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../../common/database/prisma.service';
+import { PrismaService } from '../../common/database/prisma.service';
 import { CreateNotificationDto, FindNotificationsDto, MarkReadDto } from './dto/notification.dto';
 
 @Injectable()
@@ -13,7 +13,7 @@ export class NotificationsService {
         type: dto.type,
         title: dto.title,
         body: dto.body,
-        data: dto.data || {},
+        data: (dto.data || {}) as any,
         channel: dto.channel || 'IN_APP',
       },
     });

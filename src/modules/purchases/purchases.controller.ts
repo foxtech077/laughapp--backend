@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Param, ParseUUIDPipe } from '@nestjs/commo
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { PurchasesService } from './purchases.service';
 import { CreatePurchaseDto, ConfirmPurchaseDto } from './dto/purchase.dto';
-import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @ApiTags('purchases')
 @Controller('purchases')

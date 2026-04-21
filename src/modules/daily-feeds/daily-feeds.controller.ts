@@ -2,8 +2,8 @@ import { Controller, Get, Post, Body, Param, Query, ParseUUIDPipe } from '@nestj
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { DailyFeedsService } from './daily-feeds.service';
 import { GenerateFeedDto, FindFeedsDto, FeedResponseDto } from './dto/daily-feed.dto';
-import { Roles } from '../../../common/decorators/roles.decorator';
-import { Public } from '../../../common/decorators/public.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 import { UserType } from '@prisma/client';
 
 @ApiTags('feeds')
