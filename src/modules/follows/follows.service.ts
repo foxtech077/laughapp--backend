@@ -12,7 +12,7 @@ export class FollowsService {
     }
 
     // Check if user exists
-    const userToFollow = await this.prisma.user.findUnique({
+    const userToFollow = await this.prisma.user.findFirst({
       where: { id: dto.followingId, deletedAt: null },
     });
 

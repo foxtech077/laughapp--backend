@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../common/database/prisma.service';
 import { CreateUserDto, UpdateUserDto, FindUsersDto } from './dto/user.dto';
-import { UserType } from '@prisma/client';
+import { CoinTxnReason, UserType } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -87,7 +87,7 @@ export class UsersService {
     const skip = (page - 1) * limit;
 
     const where: Record<string, unknown> = {
-      deletedAt: undefined,
+      deletedAt: null,
     };
 
     if (userType) {
@@ -141,7 +141,7 @@ export class UsersService {
 
   async findOne(id: string) {
     const user = await this.prisma.user.findFirst({
-      where: { id, deletedAt: undefined },
+      where: { id, deletedAt: null },
       include: {
         creatorProfile: true,
       },
@@ -158,7 +158,7 @@ export class UsersService {
 
   async findByEmail(email: string) {
     const user = await this.prisma.user.findFirst({
-      where: { email, deletedAt: undefined },
+      where: { email, deletedAt: null },
     });
 
     if (!user) {
@@ -211,7 +211,7 @@ export class UsersService {
     return { message: 'User deleted successfully' };
   }
 
-  async updateCoinBalance(userId: string, amount: number, reason: string) {
+  async updateCoinBalance(userId: string, amount: number, reason: CoinTxnReason) {
     const user = await this.prisma.user.update({
       where: { id: userId },
       data: {
@@ -224,7 +224,7 @@ export class UsersService {
         userId,
         amount,
         balanceAfter: user.coinBalance,
-        reason: reason as any,
+        reason,
       },
     });
 
@@ -232,7 +232,7 @@ export class UsersService {
   }
 
   async validatePassword(email: string, password: string) {
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.user.findFirst({
       where: { email, deletedAt: null },
     });
 

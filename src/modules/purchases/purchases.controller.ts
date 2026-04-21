@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { PurchasesService } from './purchases.service';
 import { CreatePurchaseDto, ConfirmPurchaseDto } from './dto/purchase.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { UserType } from '@prisma/client';
 
 @ApiTags('purchases')
 @Controller('purchases')
@@ -20,8 +21,13 @@ export class PurchasesController {
   @Post(':id/confirm')
   @ApiOperation({ summary: 'Confirm payment and credit coins' })
   @ApiResponse({ status: 200, description: 'Purchase confirmed' })
-  confirm(@Param('id', ParseUUIDPipe) id: string, @Body() dto: ConfirmPurchaseDto) {
-    return this.purchasesService.confirm(id, dto);
+  confirm(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser('id') userId: string,
+    @CurrentUser('userType') userType: UserType,
+    @Body() dto: ConfirmPurchaseDto,
+  ) {
+    return this.purchasesService.confirm(id, userId, userType, dto);
   }
 
   @Get()

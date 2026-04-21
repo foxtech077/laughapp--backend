@@ -104,7 +104,7 @@ export class VideosService {
   }
 
   async findOne(id: string) {
-    const video = await this.prisma.video.findUnique({
+    const video = await this.prisma.video.findFirst({
       where: { id, deletedAt: null },
       include: {
         creator: {

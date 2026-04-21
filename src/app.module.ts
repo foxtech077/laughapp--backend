@@ -1,8 +1,11 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { JwtModule } from '@nestjs/jwt';
-import { PassportModule } from '@nestjs/passport';
+import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { PrismaModule } from './common/database/prisma.module';
+import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { RolesGuard } from './common/guards/roles.guard';
+import { HealthController } from './health.controller';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { VideosModule } from './modules/videos/videos.module';
@@ -22,26 +25,15 @@ import { RateLimitsModule } from './modules/rate-limits/rate-limits.module';
 import { SessionsModule } from './modules/sessions/sessions.module';
 
 @Module({
+  controllers: [HealthController],
   imports: [
     // Config
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env', '.env.local'],
     }),
-
-    // Passport
-    PassportModule.register({ defaultStrategy: 'jwt' }),
-
-    // JWT
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
-        signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRES_IN', '7d'),
-        },
-      }),
-      inject: [ConfigService],
+    ThrottlerModule.forRoot({
+      throttlers: [{ ttl: 60_000, limit: 100 }],
     }),
 
     // Prisma
@@ -65,6 +57,11 @@ import { SessionsModule } from './modules/sessions/sessions.module';
     AdminAuditLogModule,
     RateLimitsModule,
     SessionsModule,
+  ],
+  providers: [
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
   ],
 })
 export class AppModule {}

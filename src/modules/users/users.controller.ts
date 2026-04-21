@@ -10,6 +10,7 @@ import {
   ParseUUIDPipe,
   HttpCode,
   HttpStatus,
+  ForbiddenException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -75,10 +76,10 @@ export class UsersController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateUserDto: UpdateUserDto,
     @CurrentUser('id') currentUserId: string,
+    @CurrentUser('userType') currentUserType: UserType,
   ) {
-    // Users can only update themselves, admins can update anyone
-    if (id !== currentUserId) {
-      // TODO: Check if current user is admin
+    if (id !== currentUserId && currentUserType !== UserType.ADMIN) {
+      throw new ForbiddenException('You can only update your own profile');
     }
     return this.usersService.update(id, updateUserDto);
   }

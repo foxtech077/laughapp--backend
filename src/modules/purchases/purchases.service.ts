@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/database/prisma.service';
 import { CreatePurchaseDto, ConfirmPurchaseDto } from './dto/purchase.dto';
+import { ForbiddenException } from '@nestjs/common';
+import { UserType } from '@prisma/client';
 
 @Injectable()
 export class PurchasesService {
@@ -30,7 +32,7 @@ export class PurchasesService {
     return purchase;
   }
 
-  async confirm(id: string, dto: ConfirmPurchaseDto) {
+  async confirm(id: string, requesterUserId: string, requesterUserType: UserType, dto: ConfirmPurchaseDto) {
     const purchase = await this.prisma.purchase.findUnique({ where: { id } });
 
     if (!purchase) {
@@ -39,6 +41,12 @@ export class PurchasesService {
 
     if (purchase.paymentStatus === 'COMPLETED') {
       throw new BadRequestException('Purchase already completed');
+    }
+
+    const isOwner = purchase.userId === requesterUserId;
+    const isAdmin = requesterUserType === UserType.ADMIN;
+    if (!isOwner && !isAdmin) {
+      throw new ForbiddenException('You are not allowed to confirm this purchase');
     }
 
     // Update purchase

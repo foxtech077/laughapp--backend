@@ -44,6 +44,8 @@ cp .env.example .env
 
 Edit `.env` with your database credentials and secrets.
 
+Before any production deploy, rotate `JWT_SECRET` and `JWT_REFRESH_SECRET` to strong unique values.
+
 ### Running
 
 ```bash
@@ -58,6 +60,8 @@ npm run start:prod
 ## API Documentation
 
 Once running, visit: http://localhost:3000/docs
+
+Swagger is disabled automatically when `NODE_ENV=production`.
 
 ## Test Accounts (after seeding)
 
@@ -99,3 +103,8 @@ src/
 ## License
 
 MIT
+
+## Technical Notes
+
+- `tsconfig.json` currently keeps `strict` mode disabled for MVP velocity.
+- TODO: enable strict typing and fix resulting type errors in a dedicated hardening pass.

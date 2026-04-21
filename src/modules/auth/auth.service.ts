@@ -3,8 +3,6 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
 import { LoginDto, RegisterDto, AuthResponseDto } from './dto/auth.dto';
-import * as bcrypt from 'bcrypt';
-import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class AuthService {
@@ -21,7 +19,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    return this.generateTokens(user.id, user.email, user.userType);
+    return this.generateTokens(user.id, user.email, user.userType, user.username);
   }
 
   async register(dto: RegisterDto) {
@@ -32,7 +30,7 @@ export class AuthService {
       displayName: dto.displayName,
     });
 
-    return this.generateTokens(user.id, user.email, user.userType);
+    return this.generateTokens(user.id, user.email, user.userType, user.username);
   }
 
   async refreshToken(refreshToken: string) {
@@ -43,7 +41,7 @@ export class AuthService {
 
       const user = await this.usersService.findOne(payload.sub);
 
-      return this.generateTokens(user.id, user.email, user.userType);
+      return this.generateTokens(user.id, user.email, user.userType, user.username);
     } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
@@ -53,6 +51,7 @@ export class AuthService {
     userId: string,
     email: string,
     userType: string,
+    username: string | null,
   ): Promise<AuthResponseDto> {
     const payload = { sub: userId, email, userType };
 
@@ -62,14 +61,17 @@ export class AuthService {
       expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '30d'),
     });
 
+    const decoded = this.jwtService.decode(accessToken) as { exp?: number } | null;
+    const expiresIn = decoded?.exp ? Math.max(0, decoded.exp - Math.floor(Date.now() / 1000)) : 0;
+
     return {
       accessToken,
       refreshToken,
-      expiresIn: 7 * 24 * 60 * 60, // 7 days in seconds
+      expiresIn,
       user: {
         id: userId,
         email,
-        username: null, // Will be fetched if needed
+        username,
         userType,
       },
     };
