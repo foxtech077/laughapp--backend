@@ -1,0 +1,580 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum UserType {
+  ANONYMOUS
+  FAN
+  SUPPORTER
+  CREATOR
+  ADMIN
+}
+
+enum AttributionType {
+  VIDEO_LINK
+  CREATOR_PROFILE
+  INVITE_LINK
+  ORGANIC
+}
+
+enum VideoStatus {
+  PROCESSING
+  PUBLISHED
+  REJECTED
+  DELETED
+}
+
+enum CoinTxnReason {
+  TRIAL_CREDIT
+  PURCHASE
+  BONUS
+  TIP_SENT
+  TIP_RECEIVED
+  REFERRAL_BONUS
+  REFUND
+}
+
+enum FollowType {
+  MANUAL
+  AUTO_SIGNUP
+}
+
+enum FeedStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+// ============================================================
+// USERS
+// ============================================================
+
+model User {
+  id                       String    @id @default(uuid())
+  userType                 UserType  @default(FAN)
+  username                 String?   @unique
+  email                    String    @unique
+  passwordHash             String?   @map("password_hash")
+  displayName              String?   @map("display_name")
+  avatarUrl                String?   @map("avatar_url")
+  bio                      String?
+  profileLink              String?   @unique @map("profile_link")
+  isActive                 Boolean   @default(true) @map("is_active")
+  isVerified               Boolean   @default(false) @map("is_verified")
+  coinBalance              Int       @default(0) @map("coin_balance")
+  trialStartedAt           DateTime? @map("trial_started_at")
+  trialEndsAt              DateTime? @map("trial_ends_at")
+  isOnTrial                Boolean   @default(false) @map("is_on_trial")
+  supporterWindowStart    DateTime? @map("supporter_window_start")
+  totalSupportingAmount    Int       @default(0) @map("total_supporting_amount")
+  lastActiveAt             DateTime? @map("last_active_at")
+  lastTipSentAt            DateTime? @map("last_tip_sent_at")
+  lastTipReceivedAt        DateTime? @map("last_tip_received_at")
+  notificationSettings     Json      @default("{}") @map("notification_settings")
+  createdAt                DateTime  @default(now()) @map("created_at")
+  updatedAt                DateTime  @updatedAt @map("updated_at")
+  deletedAt                DateTime? @map("deleted_at")
+
+  // Relations
+  videosCreated            Video[]           @relation("CreatorVideos")
+  creatorProfile           CreatorProfile?
+  attributions             Attribution[]     @relation("AttributedUser")
+  attributedBy             Attribution?      @relation("ReferrerUser")
+  tipsGiven                Tip[]             @relation("FanTips")
+  tipsReceived             Tip[]             @relation("CreatorTips")
+  coinTransactions         CoinTransaction[]
+  purchases                Purchase[]
+  notifications            Notification[]
+  sessions                 Session[]
+  adminAuditLogs           AdminAuditLog[]   @relation("AdminActions")
+  videoPublishQuota        VideoPublishQuota?
+
+  // Follows
+  following                Follow[]          @relation("Following")
+  followers                Follow[]          @relation("Follower")
+  followerSourceVideos     Follow[]          @relation("FollowSourceVideo")
+  followerSourceCreators   Follow[]          @relation("FollowSourceCreator")
+
+  // Attributions as creator
+  attributionAsCreator     Attribution[]     @relation("AttributionAsCreator")
+
+  // Purchases
+  purchasesMade            Purchase[]        @relation("PurchaseUser")
+
+  @@map("users")
+  @@index([userType])
+  @@index([email])
+  @@index([username])
+  @@index([isOnTrial])
+  @@index([supporterWindowStart])
+}
+
+// ============================================================
+// CREATOR PROFILES
+// ============================================================
+
+model CreatorProfile {
+  id                  String    @id @default(uuid())
+  userId              String    @unique @map("user_id")
+  stageName           String?   @map("stage_name")
+  tagline             String?   @map("tagline")
+  totalViews          BigInt    @default(0) @map("total_views")
+  totalSignups        BigInt    @default(0) @map("total_signups")
+  totalTipsReceived   BigInt    @default(0) @map("total_tips_received")
+  totalTipAmount      BigInt    @default(0) @map("total_tip_amount")
+  totalFollowers      BigInt    @default(0) @map("total_followers")
+  payoutEmail         String?   @map("payout_email")
+  payoutInfo          Json      @default("{}") @map("payout_info")
+  isFeatured          Boolean   @default(false) @map("is_featured")
+  featuredAt          DateTime? @map("featured_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("creator_profiles")
+  @@index([userId])
+  @@index([isFeatured])
+}
+
+// ============================================================
+// ATTRIBUTION
+// ============================================================
+
+model Attribution {
+  id                String          @id @default(uuid())
+  userId            String          @map("user_id")
+  attributionType   AttributionType @map("attribution_type")
+  videoId           String?         @map("video_id")
+  creatorId         String?         @map("creator_id")
+  inviteCode        String?         @map("invite_code")
+  referringUrl      String?         @map("referring_url")
+  utmSource         String?         @map("utm_source")
+  utmMedium         String?         @map("utm_medium")
+  utmCampaign       String?         @map("utm_campaign")
+  ipAddress         String?         @map("ip_address")
+  userAgent         String?         @map("user_agent")
+  deviceType        String?         @map("device_type")
+  countryCode       String?         @map("country_code")
+  city              String?         @map("city")
+  createdAt         DateTime        @default(now()) @map("created_at")
+
+  // Relations
+  user              User            @relation("AttributedUser", fields: [userId], references: [id], onDelete: Cascade)
+  video             Video?          @relation(fields: [videoId], references: [id], onDelete: SetNull)
+  creator           User?           @relation("AttributionAsCreator", fields: [creatorId], references: [id], onDelete: SetNull)
+
+  @@map("attributions")
+  @@index([userId])
+  @@index([videoId])
+  @@index([creatorId])
+  @@index([attributionType])
+  @@index([createdAt])
+}
+
+// ============================================================
+// VIDEOS
+// ============================================================
+
+model Video {
+  id                String      @id @default(uuid())
+  creatorId         String      @map("creator_id")
+  title             String      @map("title")
+  description       String?    @map("description")
+  hashtags          String?    @map("hashtags")
+  videoUrl          String      @map("video_url")
+  thumbnailUrl      String?     @map("thumbnail_url")
+  durationSeconds   Int?        @map("duration_seconds")
+  status            VideoStatus @default(PROCESSING)
+  viewCount         BigInt      @default(0) @map("view_count")
+  uniqueViewCount   BigInt      @default(0) @map("unique_view_count")
+  signupCount       BigInt      @default(0) @map("signup_count")
+  tipCount          BigInt      @default(0) @map("tip_count")
+  tipAmount         BigInt      @default(0) @map("tip_amount")
+  likeCount         BigInt      @default(0) @map("like_count")
+  shareCount        BigInt      @default(0) @map("share_count")
+  publishedAt       DateTime?   @map("published_at")
+  scheduledAt       DateTime?   @map("scheduled_at")
+  isActive          Boolean     @default(true) @map("is_active")
+  isFeatured        Boolean     @default(false) @map("is_featured")
+  processingError   String?     @map("processing_error")
+  rejectionReason   String?     @map("rejection_reason")
+  videoMetadata     Json        @default("{}") @map("video_metadata")
+  createdAt         DateTime    @default(now()) @map("created_at")
+  updatedAt         DateTime    @updatedAt @map("updated_at")
+  deletedAt         DateTime?   @map("deleted_at")
+
+  // Relations
+  creator           User                @relation("CreatorVideos", fields: [creatorId], references: [id], onDelete: Cascade)
+  tips              Tip[]
+  attributions      Attribution[]
+  feedEntries       DailyFeedEntry[]
+  leaderboardEntries LeaderboardEntry[]
+  followsAsSource   Follow[]            @relation("FollowSourceVideo")
+  followsAsCreator  Follow[]            @relation("FollowSourceCreator")
+
+  @@map("videos")
+  @@index([creatorId])
+  @@index([status])
+  @@index([publishedAt])
+  @@index([signupCount])
+  @@index([tipCount])
+  @@index([isActive])
+  @@index([status, publishedAt])
+}
+
+// ============================================================
+// VIDEO PUBLISH QUOTA
+// ============================================================
+
+model VideoPublishQuota {
+  id                    String    @id @default(uuid())
+  creatorId             String    @unique @map("creator_id")
+  lastPublishedAt       DateTime? @map("last_published_at")
+  publishedThisHour     Int       @default(0) @map("published_this_hour")
+  publishedThisDay      Int       @default(0) @map("published_this_day")
+  publishedThisWeek     Int       @default(0) @map("published_this_week")
+  hourlyResetAt         DateTime? @map("hourly_reset_at")
+  dailyResetAt          DateTime? @map("daily_reset_at")
+  weeklyResetAt         DateTime? @map("weekly_reset_at")
+  isBlocked             Boolean   @default(false) @map("is_blocked")
+  blockedUntil          DateTime? @map("blocked_until")
+  blockReason           String?   @map("block_reason")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  creator               User      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@map("video_publish_quota")
+  @@index([creatorId])
+  @@index([dailyResetAt])
+  @@index([weeklyResetAt])
+}
+
+// ============================================================
+// TIPS
+// ============================================================
+
+model Tip {
+  id                  String    @id @default(uuid())
+  fanId               String    @map("fan_id")
+  creatorId           String    @map("creator_id")
+  videoId             String    @map("video_id")
+  amount              Int       @map("amount")
+  isTrialTip          Boolean   @default(false) @map("is_trial_tip")
+  isPostTrialTip      Boolean   @default(false) @map("is_post_trial_tip")
+  message             String?   @map("message")
+  tipSequenceInTrial  Int?      @map("tip_sequence_in_trial")
+  trialTipsRemaining  Int?      @map("trial_tips_remaining")
+  createdAt           DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  fan                 User              @relation("FanTips", fields: [fanId], references: [id], onDelete: Cascade)
+  creator             User              @relation("CreatorTips", fields: [creatorId], references: [id], onDelete: Cascade)
+  video               Video             @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  coinTransactionFan  CoinTransaction?  @relation("TipCoinTxnFan")
+  coinTransactionCreator CoinTransaction? @relation("TipCoinTxnCreator")
+
+  @@map("tips")
+  @@index([fanId])
+  @@index([creatorId])
+  @@index([videoId])
+  @@index([createdAt])
+  @@index([fanId, createdAt])
+  @@index([creatorId, createdAt])
+  @@index([videoId, createdAt])
+}
+
+// ============================================================
+// COIN TRANSACTIONS
+// ============================================================
+
+model CoinTransaction {
+  id            String          @id @default(uuid())
+  userId        String          @map("user_id")
+  amount        Int             @map("amount")
+  balanceAfter  Int             @map("balance_after")
+  reason        CoinTxnReason  @map("reason")
+  tipId         String?         @map("tip_id")
+  purchaseId    String?         @map("purchase_id")
+  bonusId       String?         @map("bonus_id")
+  metadata      Json            @default("{}")
+  createdAt     DateTime        @default(now()) @map("created_at")
+
+  // Relations
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tipAsFan      Tip?            @relation("TipCoinTxnFan", fields: [tipId], references: [id], onDelete: SetNull)
+  tipAsCreator  Tip?            @relation("TipCoinTxnCreator", fields: [tipId], references: [id], onDelete: SetNull)
+  purchase      Purchase?       @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
+
+  @@map("coin_transactions")
+  @@index([userId])
+  @@index([reason])
+  @@index([createdAt])
+  @@index([userId, reason])
+  @@index([userId, createdAt])
+}
+
+// ============================================================
+// COIN PACKAGES
+// ============================================================
+
+model CoinPackage {
+  id                String    @id @default(uuid())
+  name              String    @map("name")
+  description       String?   @map("description")
+  coinAmount        Int       @map("coin_amount")
+  priceUsdCents     Int       @map("price_usd_cents")
+  priceUsdDisplay   String?   @map("price_usd_display")
+  bonusCoins        Int       @default(0) @map("bonus_coins")
+  isActive          Boolean   @default(true) @map("is_active")
+  sortOrder         Int       @default(0) @map("sort_order")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  purchases         Purchase[]
+
+  @@map("coin_packages")
+  @@index([isActive])
+  @@index([sortOrder])
+}
+
+// ============================================================
+// PURCHASES
+// ============================================================
+
+model Purchase {
+  id                      String    @id @default(uuid())
+  userId                  String    @map("user_id")
+  packageId               String    @map("package_id")
+  amountPaidCents         Int       @map("amount_paid_cents")
+  coinsPurchased         Int       @map("coins_purchased")
+  coinsBonus              Int       @default(0) @map("coins_bonus")
+  paymentProvider         String?   @map("payment_provider")
+  paymentProviderTxnId    String?   @map("payment_provider_txn_id")
+  paymentStatus           String    @default("PENDING") @map("payment_status")
+  createdAt               DateTime  @default(now()) @map("created_at")
+  completedAt             DateTime? @map("completed_at")
+
+  // Relations
+  user                    User              @relation("PurchaseUser", fields: [userId], references: [id], onDelete: Cascade)
+  package                 CoinPackage       @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  coinTransactions        CoinTransaction[]
+
+  @@map("purchases")
+  @@index([userId])
+  @@index([paymentStatus])
+  @@index([createdAt])
+}
+
+// ============================================================
+// FOLLOWS
+// ============================================================
+
+model Follow {
+  id                String      @id @default(uuid())
+  followerId        String      @map("follower_id")
+  followingId       String      @map("following_id")
+  followType        FollowType  @default(MANUAL) @map("follow_type")
+  sourceVideoId     String?     @map("source_video_id")
+  sourceCreatorId   String?     @map("source_creator_id")
+  createdAt         DateTime    @default(now()) @map("created_at")
+
+  // Relations
+  follower          User        @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
+  following         User        @relation("Follower", fields: [followingId], references: [id], onDelete: Cascade)
+  sourceVideo       Video?      @relation("FollowSourceVideo", fields: [sourceVideoId], references: [id], onDelete: SetNull)
+  sourceCreator     User?       @relation("FollowSourceCreator", fields: [sourceCreatorId], references: [id], onDelete: SetNull)
+
+  @@unique([followerId, followingId])
+  @@map("follows")
+  @@index([followerId])
+  @@index([followingId])
+  @@index([followingId, createdAt])
+}
+
+// ============================================================
+// DAILY FEEDS
+// ============================================================
+
+model DailyFeed {
+  id                    String      @id @default(uuid())
+  feedDate              Date        @unique @map("feed_date")
+  status                FeedStatus  @default(DRAFT)
+  generatedAt           DateTime?   @map("generated_at")
+  publishedAt           DateTime?   @map("published_at")
+  totalVideos           Int         @default(0) @map("total_videos")
+  generationDurationMs  Int?        @map("generation_duration_ms")
+  isOverride            Boolean     @default(false) @map("is_override")
+  overrideReason       String?     @map("override_reason")
+  createdAt             DateTime    @default(now()) @map("created_at")
+  updatedAt             DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  entries               DailyFeedEntry[]
+
+  @@map("daily_feeds")
+  @@index([feedDate])
+  @@index([status])
+}
+
+// ============================================================
+// DAILY FEED ENTRIES
+// ============================================================
+
+model DailyFeedEntry {
+  id            String    @id @default(uuid())
+  feedId        String    @map("feed_id")
+  videoId       String    @map("video_id")
+  rank          Int       @map("rank")
+  score         Float     @map("score")
+  viewCount     BigInt?   @map("view_count")
+  signupCount   BigInt?   @map("signup_count")
+  tipCount      BigInt?   @map("tip_count")
+  tipAmount     BigInt?   @map("tip_amount")
+  viewScore     Float?    @map("view_score")
+  signupScore   Float?    @map("signup_score")
+  tipScore      Float?    @map("tip_score")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  feed          DailyFeed @relation(fields: [feedId], references: [id], onDelete: Cascade)
+  video         Video     @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@unique([feedId, rank])
+  @@unique([feedId, videoId])
+  @@map("daily_feed_entries")
+  @@index([feedId])
+}
+
+// ============================================================
+// LEADERBOARD ENTRIES
+// ============================================================
+
+model LeaderboardEntry {
+  id                String    @id @default(uuid())
+  videoId           String    @map("video_id")
+  hourKey           String    @map("hour_key")
+  rank              Int       @map("rank")
+  score             Float     @map("score")
+  viewCount         BigInt    @default(0) @map("view_count")
+  uniqueViewCount   BigInt    @default(0) @map("unique_view_count")
+  signupCount       BigInt    @default(0) @map("signup_count")
+  tipCount          BigInt    @default(0) @map("tip_count")
+  tipAmount         BigInt    @default(0) @map("tip_amount")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  video             Video     @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@unique([videoId, hourKey])
+  @@map("leaderboard_entries")
+  @@index([hourKey, rank])
+  @@index([hourKey])
+}
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+
+model Notification {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  type        String    @map("type")
+  title       String?   @map("title")
+  body        String?   @map("body")
+  data        Json      @default("{}")
+  isRead      Boolean   @default(false) @map("is_read")
+  readAt      DateTime? @map("read_at")
+  channel     String    @default("IN_APP") @map("channel")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@index([userId, isRead, createdAt])
+}
+
+// ============================================================
+// ADMIN AUDIT LOG
+// ============================================================
+
+model AdminAuditLog {
+  id            String    @id @default(uuid())
+  adminUserId   String    @map("admin_user_id")
+  action        String    @map("action")
+  entityType    String?   @map("entity_type")
+  entityId      String?   @map("entity_id")
+  oldValues     Json?     @map("old_values")
+  newValues     Json?     @map("new_values")
+  ipAddress     String?   @map("ip_address")
+  userAgent     String?   @map("user_agent")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  admin         User      @relation("AdminActions", fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@map("admin_audit_log")
+  @@index([adminUserId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+// ============================================================
+// RATE LIMITS
+// ============================================================
+
+model RateLimit {
+  id                    String    @id @default(uuid())
+  key                   String    @unique
+  hits                  Int       @default(0)
+  windowStart           DateTime  @map("window_start")
+  windowDurationSeconds Int       @default(60) @map("window_duration_seconds")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  @@map("rate_limits")
+  @@index([key])
+  @@index([windowStart])
+}
+
+// ============================================================
+// SESSIONS
+// ============================================================
+
+model Session {
+  id                    String    @id @default(uuid())
+  userId                String    @map("user_id")
+  refreshTokenHash      String?   @map("refresh_token_hash")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  ipAddress             String?   @map("ip_address")
+  userAgent             String?   @map("user_agent")
+  deviceType            String?   @map("device_type")
+  isActive              Boolean   @default(true) @map("is_active")
+  lastActiveAt          DateTime? @map("last_active_at")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+  @@index([userId])
+  @@index([refreshTokenHash])
+}
