@@ -100,6 +100,7 @@ export class AuthService {
 
     return this.prisma.user.create({
       data: {
+        userType: 'ANONYMOUS',
         email: null,
         phoneNumber,
         profileLink,

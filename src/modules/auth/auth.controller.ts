@@ -15,7 +15,7 @@ import { SendOtpDto, VerifyOtpDto } from './dto/auth.dto';
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   // ============================================================
   // POST /auth/send-otp
