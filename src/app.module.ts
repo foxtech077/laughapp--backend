@@ -5,6 +5,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { PrismaModule } from './common/database/prisma.module';
 import { HealthController } from './health.controller';
 import { UsersModule } from './modules/users/users.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { VideosModule } from './modules/videos/videos.module';
 import { TipsModule } from './modules/tips/tips.module';
 import { FollowsModule } from './modules/follows/follows.module';
@@ -37,6 +38,7 @@ import { SessionsModule } from './modules/sessions/sessions.module';
     PrismaModule,
 
     // Feature Modules
+    AuthModule,
     UsersModule,
     VideosModule,
     TipsModule,
