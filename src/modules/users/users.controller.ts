@@ -11,6 +11,7 @@ import {
   HttpCode,
   HttpStatus,
   ForbiddenException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -18,9 +19,17 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiParam,
+  ApiHeader,
 } from '@nestjs/swagger';
 import { UsersService } from './users.service';
-import { CreateUserDto, UpdateUserDto, FindUsersDto, UserResponseDto, PaginatedUsersResponseDto } from './dto/user.dto';
+import {
+  CreateUserDto,
+  UpdateUserDto,
+  FindUsersDto,
+  UserResponseDto,
+  PaginatedUsersResponseDto,
+  SelectRoleDto,
+} from './dto/user.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -55,6 +64,35 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   getMe(@CurrentUser('id') userId: string) {
     return this.usersService.findOne(userId);
+  }
+
+  @Patch('me/role')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Save selected onboarding role for logged-in user' })
+  @ApiHeader({
+    name: 'x-user-id',
+    required: true,
+    description: 'Current logged-in user ID (UUID)',
+    example: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+  })
+  @ApiResponse({ status: 200, description: 'Role saved successfully' })
+  @ApiResponse({ status: 400, description: 'Only FAN or CREATOR can be selected' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async selectRole(@CurrentUser('id') userId: string, @Body() body: SelectRoleDto) {
+    if (!userId) {
+      throw new UnauthorizedException('Missing user context');
+    }
+
+    const updatedUser = await this.usersService.selectRole(userId, body);
+
+    return {
+      success: true,
+      message: 'Role saved successfully',
+      user: {
+        id: updatedUser.id,
+        userType: updatedUser.userType,
+      },
+    };
   }
 
   @Get(':id')

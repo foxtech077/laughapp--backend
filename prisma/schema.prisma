@@ -60,9 +60,10 @@ enum FeedStatus {
 
 model User {
   id                       String    @id @default(uuid())
-  userType                 UserType  @default(FAN)
+  userType                 UserType  @default(ANONYMOUS)
   username                 String?   @unique
-  email                    String    @unique
+  email                    String?    @unique
+  phoneNumber             String?   @unique @map("phone_number")
   passwordHash             String?   @map("password_hash")
   displayName              String?   @map("display_name")
   avatarUrl                String?   @map("avatar_url")
@@ -103,6 +104,7 @@ model User {
   @@index([userType])
   @@index([email])
   @@index([username])
+  @@index([phoneNumber])
   @@index([isOnTrial])
   @@index([supporterWindowStart])
 }
@@ -554,4 +556,20 @@ model Session {
   @@map("sessions")
   @@index([userId])
   @@index([refreshTokenHash])
+}
+
+// ============================================================
+// OTP
+// ============================================================
+
+model Otp {
+  id          String    @id @default(uuid())
+  phoneNumber String    @unique @map("phone_number")
+  otp         String    @map("otp")
+  expiresAt   DateTime  @map("expires_at")
+  verifiedAt  DateTime? @map("verified_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@map("otps")
+  @@index([phoneNumber])
 }

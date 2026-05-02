@@ -4,8 +4,11 @@ import {
   IsString,
   IsOptional,
   IsEnum,
+  IsIn,
   IsBoolean,
   IsUrl,
+  ValidateIf,
+  IsNotEmpty,
   MinLength,
   MaxLength,
   IsUUID,
@@ -82,6 +85,61 @@ export class UpdateUserDto {
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
+}
+
+export class SelectRoleDto {
+  @ApiProperty({
+    description: 'Role selected during onboarding',
+    enum: ['FAN', 'CREATOR'],
+    example: 'FAN',
+  })
+  @IsIn(['FAN', 'CREATOR'])
+  role: 'FAN' | 'CREATOR';
+
+  @ApiPropertyOptional({ description: 'Display name for FAN onboarding', example: 'Sandee Das' })
+  @ValidateIf((o: SelectRoleDto) => o.role === 'FAN')
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  displayName?: string;
+
+  @ApiPropertyOptional({ description: 'Unique username for FAN onboarding', example: 'sandee.das' })
+  @ValidateIf((o: SelectRoleDto) => o.role === 'FAN')
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(3)
+  @MaxLength(50)
+  username?: string;
+
+  @ApiPropertyOptional({ description: 'First name for CREATOR onboarding', example: 'Alexander' })
+  @ValidateIf((o: SelectRoleDto) => o.role === 'CREATOR')
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(60)
+  firstName?: string;
+
+  @ApiPropertyOptional({ description: 'Last name for CREATOR onboarding', example: 'Small' })
+  @ValidateIf((o: SelectRoleDto) => o.role === 'CREATOR')
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(60)
+  lastName?: string;
+
+  @ApiPropertyOptional({
+    description: 'Instagram profile link for CREATOR onboarding',
+    example: 'https://www.instagram.com/alexandersmall',
+  })
+  @ValidateIf((o: SelectRoleDto) => o.role === 'CREATOR')
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(255)
+  instagramLink?: string;
+
+  @ApiPropertyOptional({ description: 'Email for CREATOR onboarding', example: 'alexandersmall94@gmail.com' })
+  @ValidateIf((o: SelectRoleDto) => o.role === 'CREATOR')
+  @IsEmail()
+  @IsNotEmpty()
+  email?: string;
 }
 
 export class FindUsersDto {
