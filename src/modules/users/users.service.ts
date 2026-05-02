@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/database/prisma.service';
-import { CreateUserDto, UpdateUserDto, FindUsersDto } from './dto/user.dto';
+import { CreateUserDto, UpdateUserDto, FindUsersDto, SelectRoleDto } from './dto/user.dto';
 import { CoinTxnReason, UserType } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
@@ -198,6 +198,118 @@ export class UsersService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash, ...result } = user;
     return result;
+  }
+
+  async selectRole(userId: string, dto: SelectRoleDto) {
+    const { role } = dto;
+
+    if (role !== 'FAN' && role !== 'CREATOR') {
+      throw new BadRequestException('Only FAN or CREATOR can be selected');
+    }
+
+    await this.findOne(userId);
+
+    if (role === 'FAN') {
+      if (!dto.displayName || !dto.username) {
+        throw new BadRequestException('displayName and username are required for FAN');
+      }
+
+      const existingUsername = await this.prisma.user.findFirst({
+        where: {
+          username: dto.username,
+          NOT: { id: userId },
+        },
+        select: { id: true },
+      });
+
+      if (existingUsername) {
+        throw new ConflictException('Username already taken');
+      }
+    }
+
+    if (role === 'CREATOR') {
+      if (!dto.firstName || !dto.lastName || !dto.instagramLink || !dto.email) {
+        throw new BadRequestException(
+          'firstName, lastName, instagramLink, and email are required for CREATOR',
+        );
+      }
+
+      const existingEmail = await this.prisma.user.findFirst({
+        where: {
+          email: dto.email,
+          NOT: { id: userId },
+        },
+        select: { id: true },
+      });
+
+      if (existingEmail) {
+        throw new ConflictException('User with this email already exists');
+      }
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const displayNameForCreator =
+        role === 'CREATOR' ? `${dto.firstName?.trim() ?? ''} ${dto.lastName?.trim() ?? ''}`.trim() : undefined;
+
+      const updatedUser = await tx.user.update({
+        where: { id: userId },
+        data: {
+          userType: role as UserType,
+          displayName: role === 'FAN' ? dto.displayName : displayNameForCreator,
+          username: role === 'FAN' ? dto.username : undefined,
+          email: role === 'CREATOR' ? dto.email : undefined,
+        },
+        select: { id: true, userType: true },
+      });
+
+      if (role === 'CREATOR') {
+        const existingProfile = await tx.creatorProfile.findUnique({
+          where: { userId },
+          select: { payoutInfo: true },
+        });
+
+        const existingPayoutInfo =
+          existingProfile?.payoutInfo && typeof existingProfile.payoutInfo === 'object'
+            ? (existingProfile.payoutInfo as Record<string, unknown>)
+            : {};
+
+        await tx.creatorProfile.upsert({
+          where: { userId },
+          update: {
+            stageName: displayNameForCreator || 'New Creator',
+            payoutEmail: dto.email,
+            payoutInfo: {
+              ...existingPayoutInfo,
+              firstName: dto.firstName,
+              lastName: dto.lastName,
+              instagramLink: dto.instagramLink,
+            },
+          },
+          create: {
+            userId,
+            stageName: displayNameForCreator || 'New Creator',
+            payoutEmail: dto.email,
+            payoutInfo: {
+              firstName: dto.firstName,
+              lastName: dto.lastName,
+              instagramLink: dto.instagramLink,
+            },
+          },
+        });
+
+        await tx.videoPublishQuota.upsert({
+          where: { creatorId: userId },
+          update: {},
+          create: {
+            creatorId: userId,
+            dailyResetAt: new Date(),
+            weeklyResetAt: new Date(),
+          },
+        });
+      }
+
+      return updatedUser;
+    });
   }
 
   async remove(id: string) {
