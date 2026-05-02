@@ -1,9 +1,9 @@
-import { BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../common/database/prisma.service';
-import { UserType } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 
+@Injectable()
 export class AuthService {
   constructor(private readonly prisma: PrismaService) {}
 
@@ -100,10 +100,8 @@ export class AuthService {
 
     return this.prisma.user.create({
       data: {
-        // email is required — use phone number as placeholder for OTP-only users
-        email: `phone_${phoneNumber}@placeholder.internal`,
+        email: null,
         phoneNumber,
-        userType: UserType.FAN,
         profileLink,
         isOnTrial: true,
         trialStartedAt: new Date(),
