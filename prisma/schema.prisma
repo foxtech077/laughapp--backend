@@ -60,7 +60,7 @@ enum FeedStatus {
 
 model User {
   id                       String    @id @default(uuid())
-  userType                 UserType  @default(FAN)
+  userType                 UserType  @default(ANONYMOUS)
   username                 String?   @unique
   email                    String?    @unique
   phoneNumber             String?   @unique @map("phone_number")
