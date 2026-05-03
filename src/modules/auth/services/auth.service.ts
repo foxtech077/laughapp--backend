@@ -156,7 +156,7 @@ export class AuthService {
   // Core Auth Flow
   // ============================================================
 
-  async handleSignupFlow(user: { id: string }, source?: { creatorId?: string }) {
+  async handleSignupFlow(user: { id: string }, source?: { creatorId?: string, videoId?: string, inviteId?: string }) {
     console.log(`📱 [DEV] Handling signup flow for user ${user.id}`);
     await this.signupService.handleSignupFlow(user, source);
   }

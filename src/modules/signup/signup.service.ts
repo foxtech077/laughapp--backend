@@ -4,6 +4,8 @@ import { PrismaService } from '../../common/database/prisma.service';
 
 type SignupSource = {
   creatorId?: string;
+  videoId?: string;
+  inviteId?: string;
 };
 
 @Injectable()
@@ -12,7 +14,7 @@ export class SignupService {
   private static readonly SIGNUP_BONUS_SOURCE = 'SIGNUP_BONUS';
   private static readonly TRIAL_DAYS = 7;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async handleSignupFlow(user: Pick<User, 'id'>, source?: SignupSource) {
     const bonusId = this.getSignupBonusId(user.id);
@@ -28,7 +30,7 @@ export class SignupService {
     }
 
     await this.activateTrial(user.id);
-    await this.maybeHandleCreatorAttributionAndFollow(user.id, source?.creatorId);
+    await this.maybeHandleCreatorAttributionAndFollow(user.id, source);
     await this.creditSignupBonus(user.id, bonusId);
   }
 
@@ -61,63 +63,134 @@ export class SignupService {
 
   private async maybeHandleCreatorAttributionAndFollow(
     userId: string,
-    creatorId?: string,
+    source?: SignupSource,
   ) {
-    if (!creatorId || creatorId === userId) {
+    if (!source?.creatorId && !source?.videoId && !source?.inviteId) {
       return;
     }
 
-    const creator = await this.prisma.user.findFirst({
-      where: { id: creatorId, deletedAt: null },
+    const existingAttribution = await this.prisma.attribution.findFirst({
+      where: { userId },
       select: { id: true },
     });
 
-    if (!creator) {
+    if (source.creatorId) {
+      if (source.creatorId === userId) {
+        return;
+      }
+
+      const creator = await this.prisma.user.findFirst({
+        where: { id: source.creatorId, deletedAt: null },
+        select: { id: true },
+      });
+
+      if (!creator) {
+        return;
+      }
+
+      if (!existingAttribution) {
+        await this.prisma.attribution.create({
+          data: {
+            userId,
+            attributionType: AttributionType.CREATOR_PROFILE,
+            creatorId: creator.id,
+          },
+        });
+      }
+
+      const existingFollow = await this.prisma.follow.findUnique({
+        where: {
+          followerId_followingId: {
+            followerId: userId,
+            followingId: creator.id,
+          },
+        },
+        select: { id: true },
+      });
+
+      if (!existingFollow) {
+        await this.prisma.follow.create({
+          data: {
+            followerId: userId,
+            followingId: creator.id,
+            followType: 'AUTO_SIGNUP',
+            sourceCreatorId: creator.id,
+          },
+        });
+
+        await this.prisma.creatorProfile.updateMany({
+          where: { userId: creator.id },
+          data: {
+            totalFollowers: { increment: 1 },
+          },
+        });
+      }
+
       return;
     }
 
-    const existingCreatorAttribution = await this.prisma.attribution.findFirst({
-      where: {
-        userId,
-        attributionType: AttributionType.CREATOR_PROFILE,
-      },
-      select: { id: true },
-    });
+    if (source.videoId) {
+      const sourceVideo = await this.prisma.video.findFirst({
+        where: { id: source.videoId, deletedAt: null },
+        select: { id: true, creatorId: true },
+      });
 
-    if (!existingCreatorAttribution) {
+      if (!sourceVideo) {
+        return;
+      }
+
+      if (!existingAttribution) {
+        await this.prisma.attribution.create({
+          data: {
+            userId,
+            attributionType: AttributionType.VIDEO_LINK,
+            creatorId: sourceVideo.creatorId,
+            videoId: sourceVideo.id,
+          },
+        });
+      }
+
+      if (sourceVideo.creatorId === userId) {
+        return;
+      }
+
+      const existingFollow = await this.prisma.follow.findUnique({
+        where: {
+          followerId_followingId: {
+            followerId: userId,
+            followingId: sourceVideo.creatorId,
+          },
+        },
+        select: { id: true },
+      });
+
+      if (!existingFollow) {
+        await this.prisma.follow.create({
+          data: {
+            followerId: userId,
+            followingId: sourceVideo.creatorId,
+            followType: 'AUTO_SIGNUP',
+            sourceCreatorId: sourceVideo.creatorId,
+          },
+        });
+
+        await this.prisma.creatorProfile.updateMany({
+          where: { userId: sourceVideo.creatorId },
+          data: {
+            totalFollowers: { increment: 1 },
+          },
+        });
+      }
+
+      return;
+    }
+
+    if (source.inviteId && !existingAttribution) {
       await this.prisma.attribution.create({
         data: {
           userId,
-          attributionType: AttributionType.CREATOR_PROFILE,
-          creatorId,
-        },
-      });
-    }
-
-    const existingFollow = await this.prisma.follow.findUnique({
-      where: {
-        followerId_followingId: {
-          followerId: userId,
-          followingId: creatorId,
-        },
-      },
-      select: { id: true },
-    });
-
-    if (!existingFollow) {
-      await this.prisma.follow.create({
-        data: {
-          followerId: userId,
-          followingId: creatorId,
-          followType: 'AUTO_SIGNUP',
-          sourceCreatorId: creatorId,
-        },
-      });
-
-      await this.prisma.creatorProfile.updateMany({
-        where: { userId: creatorId },
-        data: {
-          totalFollowers: { increment: 1 },
+          attributionType: AttributionType.INVITE_LINK,
+          inviteCode: source.inviteId,
         },
       });
     }
