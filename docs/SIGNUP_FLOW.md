@@ -8,6 +8,57 @@ This document describes the new post-signup flow that runs after OTP verificatio
 - Trigger: only in `POST /auth/verify-otp` when no existing user is found and a new user is created
 - Source currently supports:
   - `creatorId` (optional)
+  - `videoId` (optional)
+  - `inviteId` (optional)
+
+## URL-Style Attribution Examples
+
+Frontend can use URL-style links such as:
+
+- Creator profile URL:
+  - `https://laughapp.com/u/john-8f23ab1c`
+- Video URL:
+  - `https://laughapp.com/v/2d8f1a9b-video-id`
+- Invite URL:
+  - `https://laughapp.com/invite/john-8f23ab1c`
+  - `https://laughapp.com/invite?creatorId=<creator-user-id>`
+
+Example payloads for `POST /api/v1/auth/verify-otp`:
+
+```json
+{
+  "phoneNumber": "+919876543210",
+  "otp": "543210",
+  "source": {
+    "creatorId": "a4b7c2d1-creator-user-id"
+  }
+}
+```
+
+```json
+{
+  "phoneNumber": "+919876543210",
+  "otp": "543210",
+  "source": {
+    "videoId": "2d8f1a9b-video-id"
+  }
+}
+```
+
+```json
+{
+  "phoneNumber": "+919876543210",
+  "otp": "543210",
+  "source": {
+    "inviteId": "https://laughapp.com/u/john-8f23ab1c"
+  }
+}
+```
+
+Notes:
+
+- Current implementation resolves URL/string parsing in `inviteId`.
+- `creatorId` and `videoId` are currently expected as direct IDs.
 
 ## What the Flow Does
 
