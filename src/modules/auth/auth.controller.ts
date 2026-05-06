@@ -85,7 +85,7 @@ export class AuthController {
     if (!user) {
       user = await this.authService.createPhoneUser(normalized);
       isNewUser = true;
-      await this.authService.handleSignupFlow(user.id, source);
+      await this.authService.handleSignupFlow(user, source);
     }
 
     await this.authService.deleteOtp(normalized);

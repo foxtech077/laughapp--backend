@@ -2,10 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../common/database/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
+import { SignupService } from '../../signup/signup.service';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly signupService: SignupService,
+  ) { }
 
   // ============================================================
   // OTP Management
@@ -96,7 +100,6 @@ export class AuthService {
    */
   async createPhoneUser(phoneNumber: string) {
     const profileLink = `user-${uuidv4().slice(0, 8)}`;
-    const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     return this.prisma.user.create({
       data: {
@@ -104,10 +107,10 @@ export class AuthService {
         email: null,
         phoneNumber,
         profileLink,
-        isOnTrial: true,
-        trialStartedAt: new Date(),
-        trialEndsAt,
-        coinBalance: 10, // 10 free coins on signup
+        isOnTrial: false,
+        trialStartedAt: null,
+        trialEndsAt: null,
+        coinBalance: 0,
       },
     });
   }
@@ -153,14 +156,9 @@ export class AuthService {
   // Core Auth Flow
   // ============================================================
 
-  /**
-   * Trigger signup flow for new users.
-   * This is a stub — actual signup logic (attribution, auto-follow, etc.)
-   * should be implemented in a dedicated signup module.
-   */
-  async handleSignupFlow(userId: string, source?: { videoId?: string; creatorId?: string; inviteId?: string }) {
-    console.log(`🎉 [SignupFlow] New user ${userId} signed up`, source || '(no source)');
-    // TODO: Implement full signup flow — attribution, auto-follow, trial tip setup, etc.
+  async handleSignupFlow(user: { id: string }, source?: { creatorId?: string, videoId?: string, inviteId?: string }) {
+    console.log(`📱 [DEV] Handling signup flow for user ${user.id}`);
+    await this.signupService.handleSignupFlow(user, source);
   }
 
   /**

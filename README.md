@@ -61,6 +61,12 @@ Once running, visit: http://localhost:3000/docs
 
 Swagger is disabled automatically when `NODE_ENV=production`.
 
+## Internal Docs
+
+- `docs/AUTH_PHONE_OTP.md` - OTP login/signup flow
+- `docs/SIGNUP_FLOW.md` - First-time signup side effects (trial, attribution, follow, bonus)
+- `docs/DATABASE.md` - Schema and data notes
+
 ## Seed Accounts (after seeding)
 
 - **Admin**: admin@laughapp.com / admin123
@@ -84,6 +90,7 @@ src/
 │   ├── purchases/         # Purchase records
 │   ├── creator-profiles/  # Creator-specific data
 │   ├── attributions/      # Signup attribution tracking
+│   ├── signup/            # First-time signup flow handling
 │   ├── video-publish-quota/ # Posting limits
 │   ├── admin-audit-log/   # Admin action logs
 │   ├── rate-limits/       # Rate limiting
